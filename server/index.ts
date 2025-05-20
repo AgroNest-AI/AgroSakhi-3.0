@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
 import { migrate } from "drizzle-orm/neon-serverless/migrator";
 import { db } from "./db";
+import { users } from "@shared/schema";
 
 const app = express();
 app.use(express.json());
@@ -45,8 +46,10 @@ app.use((req, res, next) => {
     log("Initializing database...");
     
     // Check if user table has data
-    const userCount = await db.select({ count: db.fn.count() }).from(users);
-    const count = Number(userCount[0]?.count) || 0;
+    const userResult = await db.execute(
+      'SELECT COUNT(*) as count FROM users'
+    );
+    const count = Number(userResult.rows?.[0]?.count) || 0;
     
     if (count === 0) {
       log("Database is empty, seeding with initial data...");
