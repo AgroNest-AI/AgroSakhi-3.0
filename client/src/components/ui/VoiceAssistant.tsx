@@ -36,14 +36,16 @@ export default function VoiceAssistant() {
           const result = await apiRequest('/api/ai/voice-query', 'POST', {
             query: transcript,
             userContext
-          });
+          }) as any;
           
-          if (result && result.data) {
-            setResponses(prev => [...prev, result.data]);
+          if (result) {
+            // Extract response text safely from the API response
+            const responseText = result.data || result.message || result.response || JSON.stringify(result);
+            setResponses(prev => [...prev, responseText]);
             
             // Optional: Use text-to-speech to read the response
             if ('speechSynthesis' in window) {
-              const utterance = new SpeechSynthesisUtterance(result.data);
+              const utterance = new SpeechSynthesisUtterance(responseText);
               utterance.lang = user?.preferredLanguage || 'en-US';
               window.speechSynthesis.speak(utterance);
             }

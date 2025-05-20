@@ -49,7 +49,14 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       ta: "ta-IN",
       te: "te-IN",
       kn: "kn-IN",
+      ml: "ml-IN",
       mr: "mr-IN",
+      gu: "gu-IN",
+      pa: "pa-IN", 
+      or: "or-IN",
+      bn: "bn-IN",
+      as: "as-IN",
+      sa: "sa-IN"
     };
     
     stopSpeechRecognition();
