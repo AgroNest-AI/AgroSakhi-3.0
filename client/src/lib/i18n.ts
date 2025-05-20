@@ -6,9 +6,11 @@ const resources = {
   en: {
     translation: {
       // Common
-      app_name: "AgroSakhi 2.0",
+      app_name: "AgroSakhi 3.0",
       greeting: "Good day",
       location: "Location",
+      language: "Language",
+      language_selector: "Select language",
       
       // Navigation
       nav_home: "Home",
