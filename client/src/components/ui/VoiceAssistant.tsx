@@ -38,12 +38,12 @@ export default function VoiceAssistant() {
             userContext
           });
           
-          if (result && result.response) {
-            setResponses(prev => [...prev, result.response]);
+          if (result && result.data) {
+            setResponses(prev => [...prev, result.data]);
             
             // Optional: Use text-to-speech to read the response
             if ('speechSynthesis' in window) {
-              const utterance = new SpeechSynthesisUtterance(result.response);
+              const utterance = new SpeechSynthesisUtterance(result.data);
               utterance.lang = user?.preferredLanguage || 'en-US';
               window.speechSynthesis.speak(utterance);
             }

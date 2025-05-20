@@ -17,7 +17,8 @@ export function LanguageSelector() {
     <div className="relative min-w-[160px]">
       <Select
         value={language}
-        onValueChange={(value) => {
+        onValueChange={(value: any) => {
+          // Cast the value to the Language type since we know it's coming from our own defined options
           setLanguage(value);
         }}
       >
