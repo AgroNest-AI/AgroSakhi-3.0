@@ -41,22 +41,25 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Initialize database - create tables if they don't exist
+    // Seed initial data - this will create an initial account and sample data if the database is empty
     log("Initializing database...");
-    await db.execute(
-      `CREATE TABLE IF NOT EXISTS drizzle_migrations (
-        id SERIAL PRIMARY KEY,
-        hash text NOT NULL,
-        created_at timestamp with time zone DEFAULT now() NOT NULL
-      )`
-    );
     
-    // Seed initial data
-    log("Seeding initial data...");
-    await (storage as any).seedInitialData();
+    // Check if user table has data
+    const userCount = await db.select({ count: db.fn.count() }).from(users);
+    const count = Number(userCount[0]?.count) || 0;
+    
+    if (count === 0) {
+      log("Database is empty, seeding with initial data...");
+      await (storage as any).seedInitialData();
+      log("Database seeding complete");
+    } else {
+      log(`Database already contains ${count} users, skipping initialization`);
+    }
+    
     log("Database initialization complete");
   } catch (err) {
     log(`Database initialization error: ${err}`);
+    console.error(err);
   }
   
   const server = await registerRoutes(app);

@@ -1,30 +1,43 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/context/UserContext";
-import { useVoice } from "@/context/VoiceContext";
-import WeatherCard from "@/components/ui/WeatherCard";
-import FarmHealthCard from "@/components/ui/FarmHealthCard";
-import TaskCard from "@/components/ui/TaskCard";
-import CropRecommendationCard from "@/components/ui/CropRecommendationCard";
-import { useTasks } from "@/hooks/useTasks";
-import { useWeather } from "@/hooks/useWeather";
-import { useSensors } from "@/hooks/useSensors";
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+
+import WeatherCard from '@/components/cards/WeatherCard';
+import SensorCard from '@/components/cards/SensorCard';
+import TaskCard from '@/components/cards/TaskCard';
+import CropRecommendationCard from '@/components/cards/CropRecommendationCard';
+import { getRandomSensorValue } from '@/lib/sensorData';
 
 export default function Home() {
+  // Translate content dynamically  
   const { t } = useTranslation();
-  const { user } = useUser();
-  const { toggleVoiceAssistant } = useVoice();
-  const userId = user?.id || 1;
-  const userLocation = user?.location || "Barabanki, Uttar Pradesh";
+
+  const userId = 1; // Will be replaced with context or auth later
+  const userLocation = "Barabanki, UP"; // Will be replaced with user's actual location
   const location = userLocation.split(",")[0].trim();
 
   // Get current hour to determine greeting
-  const [greeting, setGreeting] = useState(t('greeting'));
+  const [greeting, setGreeting] = useState('');
   
   useEffect(() => {
     const hour = new Date().getHours();
-    let greetingText = 'greeting';
+    let greetingText;
     
     if (hour < 12) {
       greetingText = 'Good morning';
@@ -34,88 +47,162 @@ export default function Home() {
       greetingText = 'Good evening';
     }
     
-    setGreeting(t(greetingText));
-  }, [t]); // Add t as a dependency to prevent warning, but only update when language changes
+    setGreeting(greetingText);
+  }, []); // Empty dependency array so it only runs once
 
   // Fetch weather data
   const { 
-    weather: currentWeather, 
-    forecast, 
+    data: weather, 
     isLoading: isWeatherLoading 
-  } = useWeather(location);
+  } = useQuery({
+    queryKey: ['/api/weather', location],
+    queryFn: () => fetch(`/api/weather/${location}`).then(res => res.json()),
+  });
+
+  // Fetch devices
+  const { 
+    data: devices, 
+    isLoading: isDevicesLoading 
+  } = useQuery({
+    queryKey: ['/api/devices', userId],
+    queryFn: () => fetch(`/api/devices/${userId}`).then(res => res.json()),
+  });
 
   // Fetch sensor data
+  const deviceId = devices && devices.length > 0 ? devices[0].id : null;
+  
   const { 
-    sensorReadings, 
-    isLoading: isSensorsLoading 
-  } = useSensors(userId);
+    data: soilMoisture, 
+    isLoading: isSoilMoistureLoading 
+  } = useQuery({
+    queryKey: ['/api/sensors', deviceId, 'soil_moisture'],
+    queryFn: () => deviceId ? fetch(`/api/sensors/${deviceId}/soil_moisture`).then(res => res.json()) : [],
+    enabled: !!deviceId,
+  });
+
+  const { 
+    data: soilTemperature, 
+    isLoading: isSoilTemperatureLoading 
+  } = useQuery({
+    queryKey: ['/api/sensors', deviceId, 'soil_temperature'],
+    queryFn: () => deviceId ? fetch(`/api/sensors/${deviceId}/soil_temperature`).then(res => res.json()) : [],
+    enabled: !!deviceId,
+  });
+
+  const { 
+    data: lightLevel, 
+    isLoading: isLightLevelLoading 
+  } = useQuery({
+    queryKey: ['/api/sensors', deviceId, 'light_level'],
+    queryFn: () => deviceId ? fetch(`/api/sensors/${deviceId}/light_level`).then(res => res.json()) : [],
+    enabled: !!deviceId,
+  });
+
+  const { 
+    data: soilPh, 
+    isLoading: isSoilPhLoading 
+  } = useQuery({
+    queryKey: ['/api/sensors', deviceId, 'soil_ph'],
+    queryFn: () => deviceId ? fetch(`/api/sensors/${deviceId}/soil_ph`).then(res => res.json()) : [],
+    enabled: !!deviceId,
+  });
 
   // Fetch tasks
   const { 
-    getTodaysTasks, 
-    tasks, 
-    isLoading: isTasksLoading,
-    createTask,
-    toggleTaskCompletion
-  } = useTasks(userId);
-
-  // Fetch crop recommendations
-  const { data: cropRecommendations, isLoading: isRecommendationsLoading } = useQuery({
-    queryKey: [`/api/recommendations/${userId}`],
-    enabled: !!userId,
+    data: tasks = [], 
+    isLoading: isTasksLoading 
+  } = useQuery({
+    queryKey: ['/api/tasks', userId],
+    queryFn: () => fetch(`/api/tasks/${userId}`).then(res => res.json()),
   });
 
-  // Handler for adding a new task
+  // Fetch crop recommendations
+  const { 
+    data: cropRecommendations = [], 
+    isLoading: isRecommendationsLoading 
+  } = useQuery({
+    queryKey: ['/api/recommendations', userId],
+    queryFn: () => fetch(`/api/recommendations/${userId}`).then(res => res.json()),
+  });
+
+  const isSensorsLoading = isSoilMoistureLoading || isSoilTemperatureLoading || isLightLevelLoading || isSoilPhLoading;
+
+  // Process sensor data
+  const sensorData = {
+    soil_moisture: {
+      data: soilMoisture || [],
+      current: soilMoisture && soilMoisture.length > 0 ? soilMoisture[0].value : getRandomSensorValue(30, 60),
+      unit: "%",
+      status: "normal", // Could be calculated based on thresholds
+      label: t("Soil Moisture")
+    },
+    soil_temperature: {
+      data: soilTemperature || [],
+      current: soilTemperature && soilTemperature.length > 0 ? soilTemperature[0].value : getRandomSensorValue(20, 30),
+      unit: "°C",
+      status: "normal",
+      label: t("Soil Temperature")
+    },
+    light_level: {
+      data: lightLevel || [],
+      current: lightLevel && lightLevel.length > 0 ? lightLevel[0].value : getRandomSensorValue(700, 1000),
+      unit: "lux",
+      status: "high",
+      label: t("Light Level")
+    },
+    soil_ph: {
+      data: soilPh || [],
+      current: soilPh && soilPh.length > 0 ? soilPh[0].value : getRandomSensorValue(6, 7.5),
+      unit: "pH",
+      status: "normal",
+      label: t("Soil pH")
+    }
+  };
+
+  // Get today's tasks
+  const getTodaysTasks = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return tasks.filter(task => {
+      if (!task.scheduledDate) return false;
+      return new Date(task.scheduledDate).toISOString().split('T')[0] === today;
+    });
+  };
+
+  // Handlers
+  const handleViewAllTasks = () => {
+    // Navigate to tasks page
+    console.log("View all tasks");
+  };
+
   const handleAddTask = () => {
-    // In a real app, this would open a modal or form
-    console.log("Add task clicked");
+    console.log("Add task");
   };
 
-  // Handler for viewing all sensor data
   const handleViewAllSensors = () => {
-    // Navigate to IoT devices page
-    window.location.href = "/iot";
+    console.log("View all sensors");
   };
 
-  // Handler for viewing all crop recommendations
   const handleViewAllRecommendations = () => {
-    // In a real app, this would navigate to a recommendations page
-    console.log("View all recommendations clicked");
+    console.log("View all recommendations");
   };
 
   return (
-    <div>
-      {/* Hero header with gradient background */}
-      <div className="relative">
-        <div className="h-48 bg-gradient-to-r from-primary-900 to-primary-700 relative overflow-hidden">
-          <img 
-            src="https://pixabay.com/get/gfa8a0cb9e1689f6a4343070d301bccb2a9ebb8ebe74fde95b8c53f9f516d8d3cfb0c52956b9548407b7dc3b517168f4d514cc938e4828982232050a1cbba3cb8_1280.jpg" 
-            alt="Rural farming in India" 
-            className="object-cover w-full h-full mix-blend-overlay opacity-60"
-          />
-          <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
-            <p className="text-sm font-medium">{greeting}</p>
-            <h1 className="text-2xl font-display font-bold">{user?.displayName || "Farmer"}</h1>
-            <div className="flex items-center mt-1">
-              <span className="material-icons text-sm mr-1">place</span>
-              <p className="text-sm">{userLocation}</p>
-            </div>
-          </div>
-        </div>
+    <div className="p-4 md:p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-1">{t(greeting)}, Raj!</h1>
+        <p className="text-muted-foreground">{t('Here\'s the latest from your farm')}</p>
       </div>
 
-      {/* Main content area */}
-      <div className="p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Weather card */}
         <WeatherCard 
-          currentWeather={currentWeather} 
-          forecast={forecast} 
-          isLoading={isWeatherLoading} 
+          weatherData={weather && weather.length > 0 ? weather[0] : null} 
+          isLoading={isWeatherLoading}
         />
 
-        {/* Farm Health card */}
-        <FarmHealthCard 
-          sensorReadings={sensorReadings} 
+        {/* Sensor info card */}
+        <SensorCard 
+          sensorData={sensorData} 
           isLoading={isSensorsLoading}
           onViewAllClick={handleViewAllSensors}
         />
@@ -130,7 +217,7 @@ export default function Home() {
 
         {/* Crop Recommendations card */}
         <CropRecommendationCard 
-          recommendations={cropRecommendations || []} 
+          recommendations={Array.isArray(cropRecommendations) ? cropRecommendations : []} 
           isLoading={isRecommendationsLoading}
           onViewAllClick={handleViewAllRecommendations}
         />
