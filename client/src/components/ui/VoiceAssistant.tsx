@@ -33,17 +33,17 @@ export default function VoiceAssistant() {
             // Add more context here if needed
           };
           
-          const response = await apiRequest('/api/ai/voice-query', 'POST', {
+          const result = await apiRequest('/api/ai/voice-query', 'POST', {
             query: transcript,
             userContext
           });
           
-          if (response && response.response) {
-            setResponses(prev => [...prev, response.response]);
+          if (result && result.response) {
+            setResponses(prev => [...prev, result.response]);
             
             // Optional: Use text-to-speech to read the response
             if ('speechSynthesis' in window) {
-              const utterance = new SpeechSynthesisUtterance(response.response);
+              const utterance = new SpeechSynthesisUtterance(result.response);
               utterance.lang = user?.preferredLanguage || 'en-US';
               window.speechSynthesis.speak(utterance);
             }
