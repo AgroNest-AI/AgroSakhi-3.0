@@ -450,5 +450,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI-powered crop recommendations
+  app.post("/api/ai/recommendations", async (req: Request, res: Response) => {
+    try {
+      const { location, soilType, soilPH, soilMoisture, temperature, season, userId } = req.body;
+      
+      if (!location) {
+        return res.status(400).json({ message: "Location is required" });
+      }
+
+      // Import the controller dynamically to avoid circular dependencies
+      const { generateAICropRecommendations } = await import("./controllers/recommendationController");
+      await generateAICropRecommendations(req, res);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to generate AI crop recommendations", 
+        error: error.message 
+      });
+    }
+  });
+
+  // Weather impact analysis
+  app.post("/api/ai/weather-impact", async (req: Request, res: Response) => {
+    try {
+      const { cropName, weatherForecast } = req.body;
+      
+      if (!cropName || !weatherForecast) {
+        return res.status(400).json({ message: "Crop name and weather forecast are required" });
+      }
+      
+      // Import the controller dynamically to avoid circular dependencies
+      const { analyzeWeatherImpactForCrop } = await import("./controllers/recommendationController");
+      await analyzeWeatherImpactForCrop(req, res);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to analyze weather impact", 
+        error: error.message 
+      });
+    }
+  });
+
+  // Personalized farming advice
+  app.post("/api/ai/farming-advice", async (req: Request, res: Response) => {
+    try {
+      const { cropName, growthStage, issues } = req.body;
+      
+      if (!cropName || !growthStage) {
+        return res.status(400).json({ message: "Crop name and growth stage are required" });
+      }
+      
+      // Import the controller dynamically to avoid circular dependencies
+      const { generatePersonalizedFarmingAdvice } = await import("./controllers/recommendationController");
+      await generatePersonalizedFarmingAdvice(req, res);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to generate farming advice", 
+        error: error.message 
+      });
+    }
+  });
+
+  // Plant disease analysis through image
+  app.post("/api/ai/plant-analysis", async (req: Request, res: Response) => {
+    try {
+      const { image } = req.body;
+      
+      if (!image) {
+        return res.status(400).json({ message: "Plant image is required" });
+      }
+      
+      // Import OpenAI function directly to avoid circular dependencies
+      const { analyzePlantImage } = await import("./lib/openai");
+      const analysis = await analyzePlantImage(image);
+      
+      res.json(analysis);
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to analyze plant image", 
+        error: error.message 
+      });
+    }
+  });
+
+  // Voice assistant API endpoint
+  app.post("/api/ai/voice-query", async (req: Request, res: Response) => {
+    try {
+      const { query, userContext } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ message: "Voice query is required" });
+      }
+      
+      // Import OpenAI function directly to avoid circular dependencies
+      const { processVoiceQuery } = await import("./lib/openai");
+      const response = await processVoiceQuery(query, userContext || {});
+      
+      res.json({ response });
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to process voice query", 
+        error: error.message 
+      });
+    }
+  });
+
   return httpServer;
 }

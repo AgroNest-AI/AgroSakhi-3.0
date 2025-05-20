@@ -7,12 +7,16 @@ interface VoiceContextType {
   startListening: () => void;
   stopListening: () => void;
   transcript: string;
+  resetTranscript: () => void;
   isSpeaking: boolean;
   speak: (text: string) => void;
   stopSpeaking: () => void;
   isVoiceAssistantOpen: boolean;
   toggleVoiceAssistant: () => void;
   processVoiceCommand: (command: string) => void;
+  // Added these for the new VoiceAssistant component
+  listening: boolean;  // Alias for isListening for compatibility
+  toggleListening: () => void;  // Combined function to toggle listening state
 }
 
 const VoiceContext = createContext<VoiceContextType | undefined>(undefined);
@@ -123,6 +127,15 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
     }
   }, [lastCommand, isListening, processVoiceCommand]);
 
+  // Add toggle function for voice assistant component
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  }, [isListening, startListening, stopListening]);
+
   return (
     <VoiceContext.Provider
       value={{
@@ -130,12 +143,16 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
         startListening,
         stopListening,
         transcript,
+        resetTranscript,
         isSpeaking,
         speak,
         stopSpeaking,
         isVoiceAssistantOpen,
         toggleVoiceAssistant,
         processVoiceCommand,
+        // Add these aliases for compatibility with VoiceAssistant component
+        listening: isListening,
+        toggleListening,
       }}
     >
       {children}

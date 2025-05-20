@@ -5,6 +5,9 @@ import { useUser } from "@/context/UserContext";
 import FarmSummary from "@/components/ui/FarmSummary";
 import CropStatus from "@/components/ui/CropStatus";
 import WeatherForecastCard from "@/components/ui/WeatherForecast";
+import VoiceAssistant from "@/components/ui/VoiceAssistant";
+import AICropRecommender from "@/components/ui/AICropRecommender";
+import { Button } from "@/components/ui/button";
 import { Farm, Crop } from "@shared/schema";
 import { useWeather } from "@/hooks/useWeather";
 
@@ -69,31 +72,63 @@ export default function Dashboard() {
     };
   };
 
+  // State for toggling AI recommender visibility
+  const [showAIRecommender, setShowAIRecommender] = useState(false);
+
   return (
     <div className="p-4 pb-16">
       <h1 className="text-2xl font-display font-bold mb-4">{t('farm_dashboard')}</h1>
       
-      {/* Farm Summary */}
-      <FarmSummary
-        farm={getPrimaryFarm()}
-        stats={getFarmStats()}
-        isLoading={isFarmsLoading}
-      />
-      
-      {/* Crop Status */}
-      <CropStatus
-        crops={crops || []}
-        isLoading={isCropsLoading}
-        onAddCropClick={handleAddCrop}
-        onCropClick={handleCropClick}
-      />
-      
-      {/* Weather Forecast */}
-      <WeatherForecastCard
-        forecasts={forecast}
-        rainfallData={sampleRainfallData}
-        isLoading={isWeatherLoading}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
+          {/* Farm Summary */}
+          <FarmSummary
+            farm={getPrimaryFarm()}
+            stats={getFarmStats()}
+            isLoading={isFarmsLoading}
+          />
+          
+          {/* Crop Status */}
+          <CropStatus
+            crops={crops || []}
+            isLoading={isCropsLoading}
+            onAddCropClick={handleAddCrop}
+            onCropClick={handleCropClick}
+          />
+          
+          {/* Weather Forecast */}
+          <WeatherForecastCard
+            forecasts={forecast}
+            rainfallData={sampleRainfallData}
+            isLoading={isWeatherLoading}
+          />
+        </div>
+        
+        <div className="space-y-4">
+          {/* Voice Assistant */}
+          <VoiceAssistant />
+          
+          {/* AI Crop Recommender Toggle Button */}
+          <div className="flex justify-center my-4">
+            <Button 
+              onClick={() => setShowAIRecommender(!showAIRecommender)}
+              variant="outline"
+              className="flex items-center"
+            >
+              {showAIRecommender ? (
+                <>{t('Hide AI Crop Recommender')}</>
+              ) : (
+                <>{t('Show AI Crop Recommender')}</>
+              )}
+            </Button>
+          </div>
+          
+          {/* AI Crop Recommender (Expandable) */}
+          {showAIRecommender && (
+            <AICropRecommender />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
