@@ -24,14 +24,18 @@ export default function Home() {
   
   useEffect(() => {
     const hour = new Date().getHours();
+    let greetingText = 'greeting';
+    
     if (hour < 12) {
-      setGreeting(t('Good morning'));
+      greetingText = 'Good morning';
     } else if (hour < 18) {
-      setGreeting(t('Good afternoon'));
+      greetingText = 'Good afternoon';
     } else {
-      setGreeting(t('Good evening'));
+      greetingText = 'Good evening';
     }
-  }, []); // Empty dependency array so it only runs once
+    
+    setGreeting(t(greetingText));
+  }, [t]); // Add t as a dependency to prevent warning, but only update when language changes
 
   // Fetch weather data
   const { 
