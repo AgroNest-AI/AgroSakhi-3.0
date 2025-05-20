@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useLocation } from "wouter";
 import NavigationBar from "./NavigationBar";
-import LanguageSelector from "./LanguageSelector";
+import LanguageSelector from "../ui/LanguageSelector";
 import VoiceAssistant from "../ui/VoiceAssistant";
 import { useVoice } from "../../context/VoiceContext";
 import { useUser } from "../../context/UserContext";

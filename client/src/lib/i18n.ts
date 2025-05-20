@@ -314,8 +314,283 @@ const resources = {
       cancel: "रद्द करें",
       submit: "जमा करें"
     }
+  },
+  // Additional Indian languages
+  ta: {
+    translation: {
+      // Common
+      app_name: "அக்ரோசாகி 3.0",
+      greeting: "வணக்கம்",
+      location: "இடம்",
+      language: "மொழி",
+      language_selector: "மொழியைத் தேர்ந்தெடுக்கவும்",
+      
+      // Navigation
+      nav_home: "முகப்பு",
+      nav_devices: "சாதனங்கள்",
+      nav_market: "சந்தை",
+      nav_learn: "கற்றல்",
+      nav_dashboard: "டாஷ்போர்டு",
+      
+      // Voice Assistant
+      voice_assistant: "அக்ரிதிதி AI™ உதவியாளர்",
+      listening: "கேட்கிறது...",
+      speak_now: "பேசுங்கள் அல்லது கேள்வி கேளுங்கள்",
+      try_saying: "இவ்வாறு சொல்லி பாருங்கள்:",
+      cancel: "ரத்து",
+      submit: "சமர்ப்பி"
+    }
+  },
+  te: {
+    translation: {
+      // Common
+      app_name: "అగ్రోసాఖి 3.0",
+      greeting: "నమస్కారం",
+      location: "ప్రదేశం",
+      language: "భాష",
+      language_selector: "భాషను ఎంచుకోండి",
+      
+      // Navigation
+      nav_home: "హోమ్",
+      nav_devices: "పరికరాలు",
+      nav_market: "మార్కెట్",
+      nav_learn: "నేర్చుకోండి",
+      nav_dashboard: "డాష్బోర్డ్",
+      
+      // Voice Assistant
+      voice_assistant: "అగ్రిదిది AI™ సహాయకుడు",
+      listening: "వింటున్నాను...",
+      speak_now: "ఇప్పుడు మాట్లాడండి లేదా ప్రశ్న అడగండి",
+      try_saying: "ఇలా చెప్పండి:",
+      cancel: "రద్దు",
+      submit: "సమర్పించు"
+    }
+  },
+  kn: {
+    translation: {
+      // Common
+      app_name: "ಅಗ್ರೋಸಾಖಿ 3.0",
+      greeting: "ನಮಸ್ಕಾರ",
+      location: "ಸ್ಥಳ",
+      language: "ಭಾಷೆ",
+      language_selector: "ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+      
+      // Navigation
+      nav_home: "ಮುಖಪುಟ",
+      nav_devices: "ಸಾಧನಗಳು",
+      nav_market: "ಮಾರುಕಟ್ಟೆ",
+      nav_learn: "ಕಲಿಕೆ",
+      nav_dashboard: "ಡ್ಯಾಶ್ಬೋರ್ಡ್",
+      
+      // Voice Assistant
+      voice_assistant: "ಅಗ್ರಿದಿದಿ AI™ ಸಹಾಯಕ",
+      listening: "ಆಲಿಸುತ್ತಿದೆ...",
+      speak_now: "ಈಗ ಮಾತನಾಡಿ ಅಥವಾ ಪ್ರಶ್ನೆಯನ್ನು ಕೇಳಿ",
+      try_saying: "ಹೀಗೆ ಹೇಳಿ ನೋಡಿ:",
+      cancel: "ರದ್ದುಮಾಡಿ",
+      submit: "ಸಲ್ಲಿಸು"
+    }
+  },
+  ml: {
+    translation: {
+      // Common
+      app_name: "അഗ്രോസഖി 3.0",
+      greeting: "നമസ്കാരം",
+      location: "സ്ഥലം",
+      language: "ഭാഷ",
+      language_selector: "ഭാഷ തിരഞ്ഞെടുക്കുക",
+      
+      // Navigation
+      nav_home: "ഹോം",
+      nav_devices: "ഉപകരണങ്ങൾ",
+      nav_market: "മാർക്കറ്റ്",
+      nav_learn: "പഠനം",
+      nav_dashboard: "ഡാഷ്ബോർഡ്",
+      
+      // Voice Assistant
+      voice_assistant: "അഗ്രിദിദി AI™ അസിസ്റ്റന്റ്",
+      listening: "കേൾക്കുന്നു...",
+      speak_now: "ഇപ്പോൾ സംസാരിക്കുക അല്ലെങ്കിൽ ചോദ്യം ചോദിക്കുക",
+      try_saying: "ഇങ്ങനെ പറഞ്ഞു നോക്കൂ:",
+      cancel: "റദ്ദാക്കുക",
+      submit: "സമർപ്പിക്കുക"
+    }
+  },
+  mr: {
+    translation: {
+      // Common
+      app_name: "अग्रोसखी 3.0",
+      greeting: "नमस्कार",
+      location: "स्थान",
+      language: "भाषा",
+      language_selector: "भाषा निवडा",
+      
+      // Navigation
+      nav_home: "मुख्यपृष्ठ",
+      nav_devices: "उपकरणे",
+      nav_market: "बाजार",
+      nav_learn: "शिका",
+      nav_dashboard: "डॅशबोर्ड",
+      
+      // Voice Assistant
+      voice_assistant: "अग्रिदिदी AI™ सहाय्यक",
+      listening: "ऐकत आहे...",
+      speak_now: "आता बोला किंवा प्रश्न विचारा",
+      try_saying: "असे म्हणून पहा:",
+      cancel: "रद्द करा",
+      submit: "सबमिट करा"
+    }
+  },
+  gu: {
+    translation: {
+      // Common
+      app_name: "અગ્રોસાખી 3.0",
+      greeting: "નમસ્કાર",
+      location: "સ્થાન",
+      language: "ભાષા",
+      language_selector: "ભાષા પસંદ કરો",
+      
+      // Navigation
+      nav_home: "હોમ",
+      nav_devices: "ઉપકરણો",
+      nav_market: "બજાર",
+      nav_learn: "શીખો",
+      nav_dashboard: "ડેશબોર્ડ",
+      
+      // Voice Assistant
+      voice_assistant: "અગ્રિદીદી AI™ સહાયક",
+      listening: "સાંભળે છે...",
+      speak_now: "હવે બોલો અથવા પ્રશ્ન પૂછો",
+      try_saying: "આ રીતે કહી જુઓ:",
+      cancel: "રદ કરો",
+      submit: "સબમિટ કરો"
+    }
+  },
+  pa: {
+    translation: {
+      // Common
+      app_name: "ਅਗਰੋਸਾਖੀ 3.0",
+      greeting: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ",
+      location: "ਸਥਾਨ",
+      language: "ਭਾਸ਼ਾ",
+      language_selector: "ਭਾਸ਼ਾ ਚੁਣੋ",
+      
+      // Navigation
+      nav_home: "ਹੋਮ",
+      nav_devices: "ਉਪਕਰਣ",
+      nav_market: "ਮਾਰਕੀਟ",
+      nav_learn: "ਸਿੱਖੋ",
+      nav_dashboard: "ਡੈਸ਼ਬੋਰਡ",
+      
+      // Voice Assistant
+      voice_assistant: "ਅਗਰੀਦੀਦੀ AI™ ਸਹਾਇਕ",
+      listening: "ਸੁਣ ਰਿਹਾ ਹੈ...",
+      speak_now: "ਹੁਣ ਬੋਲੋ ਜਾਂ ਸਵਾਲ ਪੁੱਛੋ",
+      try_saying: "ਇਹ ਕਹਿ ਕੇ ਦੇਖੋ:",
+      cancel: "ਰੱਦ ਕਰੋ",
+      submit: "ਜਮ੍ਹਾਂ ਕਰੋ"
+    }
+  },
+  or: {
+    translation: {
+      // Common
+      app_name: "ଆଗ୍ରୋସାଖୀ 3.0",
+      greeting: "ନମସ୍କାର",
+      location: "ସ୍ଥାନ",
+      language: "ଭାଷା",
+      language_selector: "ଭାଷା ଚୟନ କରନ୍ତୁ",
+      
+      // Navigation
+      nav_home: "ହୋମ୍",
+      nav_devices: "ଉପକରଣ",
+      nav_market: "ବଜାର",
+      nav_learn: "ଶିଖନ୍ତୁ",
+      nav_dashboard: "ଡ୍ୟାସବୋର୍ଡ",
+      
+      // Voice Assistant
+      voice_assistant: "ଆଗ୍ରିଦିଦି AI™ ସହାୟକ",
+      listening: "ଶୁଣୁଛି...",
+      speak_now: "ଏବେ କୁହନ୍ତୁ କିମ୍ବା ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ",
+      try_saying: "ଏହା କହି ଦେଖନ୍ତୁ:",
+      cancel: "ବାତିଲ୍",
+      submit: "ଦାଖଲ"
+    }
+  },
+  bn: {
+    translation: {
+      // Common
+      app_name: "অ্যাগ্রোসাখী 3.0",
+      greeting: "নমস্কার",
+      location: "অবস্থান",
+      language: "ভাষা",
+      language_selector: "ভাষা নির্বাচন করুন",
+      
+      // Navigation
+      nav_home: "হোম",
+      nav_devices: "ডিভাইস",
+      nav_market: "বাজার",
+      nav_learn: "শিখুন",
+      nav_dashboard: "ড্যাশবোর্ড",
+      
+      // Voice Assistant
+      voice_assistant: "অ্যাগ্রিদিদি AI™ সহকারী",
+      listening: "শুনছি...",
+      speak_now: "এখন বলুন বা প্রশ্ন করুন",
+      try_saying: "এভাবে বলে দেখুন:",
+      cancel: "বাতিল",
+      submit: "জমা দিন"
+    }
+  },
+  as: {
+    translation: {
+      // Common
+      app_name: "এগ্ৰোছাখী 3.0",
+      greeting: "নমস্কাৰ",
+      location: "স্থান",
+      language: "ভাষা",
+      language_selector: "ভাষা বাছনি কৰক",
+      
+      // Navigation
+      nav_home: "হোম",
+      nav_devices: "ডিভাইচ",
+      nav_market: "বজাৰ",
+      nav_learn: "শিকক",
+      nav_dashboard: "ডেশ্বৰ্ড",
+      
+      // Voice Assistant
+      voice_assistant: "এগ্ৰিদিদি AI™ সহায়ক",
+      listening: "শুনি আছে...",
+      speak_now: "এতিয়া কওক বা প্ৰশ্ন সোধক",
+      try_saying: "এনেকৈ কৈ চাওক:",
+      cancel: "বাতিল",
+      submit: "দাখিল কৰক"
+    }
+  },
+  sa: {
+    translation: {
+      // Common
+      app_name: "अग्रोसखी 3.0",
+      greeting: "नमस्कारः",
+      location: "स्थानम्",
+      language: "भाषा",
+      language_selector: "भाषां चिनुत",
+      
+      // Navigation
+      nav_home: "गृहम्",
+      nav_devices: "उपकरणानि",
+      nav_market: "विपणिः",
+      nav_learn: "शिक्षा",
+      nav_dashboard: "फलकम्",
+      
+      // Voice Assistant
+      voice_assistant: "अग्रिदिदि AI™ सहायकः",
+      listening: "श्रृण्वन्...",
+      speak_now: "अधुना वदतु अथवा प्रश्नं पृच्छतु",
+      try_saying: "एवं वदतु:",
+      cancel: "निरस्तु",
+      submit: "समर्पयतु"
+    }
   }
-  // Other languages would be added here
 };
 
 export async function initializeI18n() {

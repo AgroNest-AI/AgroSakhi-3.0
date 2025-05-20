@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useTranslation } from "react-i18next";
 import { useUser } from "./UserContext";
 
-type Language = "en" | "hi" | "ta" | "te" | "kn" | "mr";
+type Language = "en" | "hi" | "ta" | "te" | "kn" | "ml" | "mr" | "gu" | "pa" | "or" | "bn" | "as" | "sa";
 
 interface LanguageContextType {
   language: Language;
@@ -12,11 +12,18 @@ interface LanguageContextType {
 
 const languageOptions = [
   { code: "en" as Language, name: "English" },
-  { code: "hi" as Language, name: "हिंदी (Hindi)" },
+  { code: "hi" as Language, name: "हिन्दी (Hindi)" },
   { code: "ta" as Language, name: "தமிழ் (Tamil)" },
   { code: "te" as Language, name: "తెలుగు (Telugu)" },
   { code: "kn" as Language, name: "ಕನ್ನಡ (Kannada)" },
+  { code: "ml" as Language, name: "മലയാളം (Malayalam)" },
   { code: "mr" as Language, name: "मराठी (Marathi)" },
+  { code: "gu" as Language, name: "ગુજરાતી (Gujarati)" },
+  { code: "pa" as Language, name: "ਪੰਜਾਬੀ (Punjabi)" },
+  { code: "or" as Language, name: "ଓଡ଼ିଆ (Odia)" },
+  { code: "bn" as Language, name: "বাংলা (Bengali)" },
+  { code: "as" as Language, name: "অসমীয়া (Assamese)" },
+  { code: "sa" as Language, name: "संस्कृतम् (Sanskrit)" },
 ];
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
