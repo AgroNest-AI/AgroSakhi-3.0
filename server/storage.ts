@@ -12,6 +12,8 @@ import {
   weatherForecasts, type WeatherForecast, type InsertWeatherForecast,
   cropRecommendations, type CropRecommendation, type InsertCropRecommendation
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc, lte, gte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -83,739 +85,556 @@ export interface IStorage {
   createCropRecommendation(recommendation: InsertCropRecommendation): Promise<CropRecommendation>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private farms: Map<number, Farm>;
-  private devices: Map<number, Device>;
-  private sensorReadings: Map<number, SensorReading>;
-  private crops: Map<number, Crop>;
-  private tasks: Map<number, Task>;
-  private marketplaceListings: Map<number, MarketplaceListing>;
-  private blockchainTransactions: Map<number, BlockchainTransaction>;
-  private learningModules: Map<number, LearningModule>;
-  private userLearningProgress: Map<string, UserLearningProgress>; // composite key: userId-moduleId
-  private weatherForecasts: Map<string, WeatherForecast>; // composite key: location-date
-  private cropRecommendations: Map<number, CropRecommendation>;
-  
-  private currentUserIdCounter: number = 1;
-  private currentFarmIdCounter: number = 1;
-  private currentDeviceIdCounter: number = 1;
-  private currentSensorReadingIdCounter: number = 1;
-  private currentCropIdCounter: number = 1;
-  private currentTaskIdCounter: number = 1;
-  private currentMarketplaceListingIdCounter: number = 1;
-  private currentBlockchainTransactionIdCounter: number = 1;
-  private currentLearningModuleIdCounter: number = 1;
-  private currentUserLearningProgressIdCounter: number = 1;
-  private currentWeatherForecastIdCounter: number = 1;
-  private currentCropRecommendationIdCounter: number = 1;
-
-  constructor() {
-    this.users = new Map();
-    this.farms = new Map();
-    this.devices = new Map();
-    this.sensorReadings = new Map();
-    this.crops = new Map();
-    this.tasks = new Map();
-    this.marketplaceListings = new Map();
-    this.blockchainTransactions = new Map();
-    this.learningModules = new Map();
-    this.userLearningProgress = new Map();
-    this.weatherForecasts = new Map();
-    this.cropRecommendations = new Map();
-    
-    // Initialize with a default user
-    this.createUser({
-      username: "priya",
-      password: "password123",
-      displayName: "Priya Singh",
-      location: "Barabanki, Uttar Pradesh",
-      preferredLanguage: "en"
-    });
-    
-    // Add some initial sample data
-    this.initializeDefaultData();
-  }
-
-  private initializeDefaultData() {
-    // Create a farm for the default user
-    const defaultFarm = this.createFarm({
-      userId: 1,
-      name: "Priya's Farm",
-      location: "Barabanki",
-      size: 5.4,
-      description: "Main agricultural farm with mixed crops"
-    });
-
-    // Create some devices
-    this.createDevice({
-      userId: 1,
-      farmId: 1,
-      name: "AgroSakhi Band #1",
-      type: "AgroSakhi Band",
-      location: "North Wheat Field",
-      status: "online",
-      batteryLevel: 85
-    });
-
-    this.createDevice({
-      userId: 1,
-      farmId: 1,
-      name: "SakhiSense Station",
-      type: "SakhiSense Station",
-      location: "Central Hub",
-      status: "online",
-      batteryLevel: 92
-    });
-
-    this.createDevice({
-      userId: 1,
-      farmId: 1,
-      name: "Pest Monitor",
-      type: "Pest Monitor",
-      location: "East Rice Paddy",
-      status: "low_signal",
-      batteryLevel: 42
-    });
-
-    // Create crops
-    this.createCrop({
-      userId: 1,
-      farmId: 1,
-      name: "Wheat",
-      variety: "HD-2967",
-      plantingDate: new Date("2022-11-15"),
-      harvestDate: new Date("2023-04-05"),
-      status: "active",
-      healthStatus: "good",
-      area: 2.5
-    });
-
-    this.createCrop({
-      userId: 1,
-      farmId: 1,
-      name: "Rice",
-      variety: "Pusa-1509",
-      plantingDate: new Date("2022-06-20"),
-      harvestDate: new Date("2023-03-15"),
-      status: "active",
-      healthStatus: "needs_attention",
-      area: 1.8
-    });
-
-    this.createCrop({
-      userId: 1,
-      farmId: 1,
-      name: "Mustard",
-      variety: "Pusa Bold",
-      plantingDate: new Date("2022-10-10"),
-      harvestDate: new Date("2023-03-25"),
-      status: "active",
-      healthStatus: "good",
-      area: 1.1
-    });
-
-    // Create tasks
-    this.createTask({
-      userId: 1,
-      farmId: 1,
-      cropId: 1,
-      title: "Irrigation check for wheat field",
-      description: "Check irrigation levels and adjust if necessary",
-      scheduledDate: new Date(),
-      priority: "high"
-    });
-
-    this.createTask({
-      userId: 1,
-      farmId: 1,
-      cropId: 1,
-      title: "Apply fertilizer to tomato plants",
-      description: "Use organic fertilizer on kitchen garden tomatoes",
-      scheduledDate: new Date(),
-      priority: "medium"
-    });
-
-    this.createTask({
-      userId: 1,
-      farmId: 1,
-      cropId: 2,
-      title: "Inspect rice paddy for pest damage",
-      description: "Look for signs of pest activity and document findings",
-      scheduledDate: new Date(),
-      priority: "high"
-    });
-
-    // Generate weather forecasts
-    const today = new Date();
-    const locations = ["Barabanki", "Lucknow", "Kanpur", "Allahabad"];
-    const conditions = ["sunny", "partly_cloudy", "cloudy", "rainy"];
-    
-    for (let i = 0; i < 10; i++) {
-      const forecastDate = new Date(today);
-      forecastDate.setDate(today.getDate() + i);
-      
-      this.createWeatherForecast({
-        location: "Barabanki",
-        forecastDate,
-        temperature: 30 + Math.floor(Math.random() * 6),
-        minTemperature: 20 + Math.floor(Math.random() * 5),
-        maxTemperature: 30 + Math.floor(Math.random() * 6),
-        humidity: 50 + Math.floor(Math.random() * 30),
-        rainfall: i === 3 ? 15 : i === 4 ? 5 : i === 9 ? 3 : 0,
-        condition: i === 3 ? "rainy" : i === 4 ? "cloudy" : i === 8 || i === 9 ? "cloudy" : "sunny"
-      });
-    }
-
-    // Create crop recommendations
-    this.createCropRecommendation({
-      userId: 1,
-      location: "Barabanki",
-      cropName: "Wheat",
-      variety: "HD-2967",
-      matchPercentage: 95,
-      reason: "Ideal for your soil pH and upcoming winter season"
-    });
-
-    this.createCropRecommendation({
-      userId: 1,
-      location: "Barabanki",
-      cropName: "Mustard",
-      variety: "Pusa Bold",
-      matchPercentage: 90,
-      reason: "Good companion crop with low water requirements"
-    });
-
-    this.createCropRecommendation({
-      userId: 1,
-      location: "Barabanki",
-      cropName: "Chickpea",
-      variety: "JG-11",
-      matchPercentage: 82,
-      reason: "Nitrogen-fixing crop ideal after rice harvest"
-    });
-
-    // Create sensor readings
-    for (let i = 0; i < 10; i++) {
-      const readingDate = new Date();
-      readingDate.setDate(readingDate.getDate() - (9 - i));
-      
-      // Soil moisture (device 1)
-      this.createSensorReading({
-        deviceId: 1,
-        type: "soil_moisture",
-        value: 40 + Math.floor(Math.random() * 30),
-        unit: "%",
-        timestamp: readingDate
-      });
-      
-      // Soil temperature (device 1)
-      this.createSensorReading({
-        deviceId: 1,
-        type: "soil_temperature",
-        value: 22 + Math.floor(Math.random() * 10),
-        unit: "°C",
-        timestamp: readingDate
-      });
-      
-      // Light level (device 1)
-      this.createSensorReading({
-        deviceId: 1,
-        type: "light_level",
-        value: 50 + Math.floor(Math.random() * 50),
-        unit: "%",
-        timestamp: readingDate
-      });
-      
-      // Soil pH (device 2)
-      this.createSensorReading({
-        deviceId: 2,
-        type: "soil_ph",
-        value: 6.0 + (Math.random() * 1.5),
-        unit: "pH",
-        timestamp: readingDate
-      });
-    }
-
-    // Create marketplace listings
-    this.createMarketplaceListing({
-      userId: 1,
-      cropName: "Wheat",
-      variety: "HD-2967",
-      quantity: 500,
-      unit: "kg",
-      price: 2400,
-      currency: "INR",
-      description: "Organically grown wheat, harvested last week",
-      location: "Barabanki",
-      isOrganic: true
-    });
-
-    // Create blockchain transactions
-    this.createBlockchainTransaction({
-      userId: 1,
-      listingId: 1,
-      transactionType: "harvest",
-      details: {
-        crop: "Wheat",
-        variety: "HD-2967",
-        quantity: "200 kg",
-        quality: "Grade A"
-      },
-      transactionHash: "0x7e21...8f92"
-    });
-
-    this.createBlockchainTransaction({
-      userId: 1,
-      listingId: 1,
-      transactionType: "quality_check",
-      details: {
-        crop: "Wheat",
-        variety: "HD-2967",
-        moisture: "12%",
-        protein: "11.5%",
-        grade: "A"
-      },
-      transactionHash: "0x9a45...2e71"
-    });
-
-    this.createBlockchainTransaction({
-      userId: 1,
-      listingId: 1,
-      transactionType: "market_listing",
-      details: {
-        crop: "Wheat",
-        variety: "HD-2967",
-        quantity: "200 kg",
-        price: "₹2,240/quintal"
-      },
-      transactionHash: "0x3f62...1a47"
-    });
-
-    // Create learning modules
-    this.createLearningModule({
-      title: "Advanced Pest Management",
-      description: "Learn environmentally friendly techniques to control pests without harmful chemicals.",
-      durationMinutes: 150,
-      lessonCount: 6,
-      difficulty: "intermediate"
-    });
-
-    this.createLearningModule({
-      title: "Water Conservation Techniques",
-      description: "Discover modern irrigation methods to reduce water usage while improving crop yields.",
-      durationMinutes: 180,
-      lessonCount: 8,
-      difficulty: "intermediate"
-    });
-
-    this.createLearningModule({
-      title: "Organic Farming",
-      description: "Comprehensive guide to organic farming practices and certification.",
-      durationMinutes: 210,
-      lessonCount: 10,
-      difficulty: "beginner"
-    });
-
-    // Create user learning progress
-    this.createUserLearningProgress({
-      userId: 1,
-      moduleId: 3,
-      progress: 65,
-      completed: false
-    });
-  }
-
-  /* User operations */
+export class DatabaseStorage implements IStorage {
+  // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const id = this.currentUserIdCounter++;
-    const newUser: User = { ...user, id, role: "farmer" };
-    this.users.set(id, newUser);
-    return newUser;
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
   }
-
-  /* Farm operations */
+  
+  // Farm operations
   async getFarm(id: number): Promise<Farm | undefined> {
-    return this.farms.get(id);
+    const result = await db.select().from(farms).where(eq(farms.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getFarmsByUserId(userId: number): Promise<Farm[]> {
-    return Array.from(this.farms.values()).filter(
-      (farm) => farm.userId === userId
-    );
+    return await db.select().from(farms).where(eq(farms.userId, userId));
   }
 
   async createFarm(farm: InsertFarm): Promise<Farm> {
-    const id = this.currentFarmIdCounter++;
-    const newFarm: Farm = { ...farm, id };
-    this.farms.set(id, newFarm);
-    return newFarm;
+    const result = await db.insert(farms).values(farm).returning();
+    return result[0];
   }
-
-  /* Device operations */
+  
+  // Device operations
   async getDevice(id: number): Promise<Device | undefined> {
-    return this.devices.get(id);
+    const result = await db.select().from(devices).where(eq(devices.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getDevicesByUserId(userId: number): Promise<Device[]> {
-    return Array.from(this.devices.values()).filter(
-      (device) => device.userId === userId
-    );
+    return await db.select().from(devices).where(eq(devices.userId, userId));
   }
 
   async getDevicesByFarmId(farmId: number): Promise<Device[]> {
-    return Array.from(this.devices.values()).filter(
-      (device) => device.farmId === farmId
-    );
+    return await db.select().from(devices).where(eq(devices.farmId, farmId));
   }
 
   async createDevice(device: InsertDevice): Promise<Device> {
-    const id = this.currentDeviceIdCounter++;
-    const now = new Date();
-    const newDevice: Device = { 
-      ...device, 
-      id, 
-      lastSeen: device.lastSeen || now 
-    };
-    this.devices.set(id, newDevice);
-    return newDevice;
+    const result = await db.insert(devices).values(device).returning();
+    return result[0];
   }
 
   async updateDeviceStatus(id: number, status: string, batteryLevel?: number): Promise<Device> {
-    const device = await this.getDevice(id);
-    if (!device) {
-      throw new Error(`Device with id ${id} not found`);
+    const updateValues: Partial<Device> = { status };
+    if (batteryLevel !== undefined) {
+      updateValues.batteryLevel = batteryLevel;
     }
+    updateValues.lastSeen = new Date();
     
-    const updatedDevice: Device = { 
-      ...device, 
-      status,
-      batteryLevel: batteryLevel !== undefined ? batteryLevel : device.batteryLevel,
-      lastSeen: new Date()
-    };
+    const result = await db
+      .update(devices)
+      .set(updateValues)
+      .where(eq(devices.id, id))
+      .returning();
     
-    this.devices.set(id, updatedDevice);
-    return updatedDevice;
+    return result[0];
   }
-
-  /* Sensor Reading operations */
-  async getSensorReadings(deviceId: number, type: string, limit?: number): Promise<SensorReading[]> {
-    let readings = Array.from(this.sensorReadings.values()).filter(
-      (reading) => reading.deviceId === deviceId && (type ? reading.type === type : true)
-    );
-    
-    // Sort by timestamp descending (newest first)
-    readings.sort((a, b) => {
-      const aTime = a.timestamp instanceof Date ? a.timestamp.getTime() : 0;
-      const bTime = b.timestamp instanceof Date ? b.timestamp.getTime() : 0;
-      return bTime - aTime;
-    });
-    
-    if (limit) {
-      readings = readings.slice(0, limit);
-    }
-    
-    return readings;
+  
+  // Sensor Reading operations
+  async getSensorReadings(deviceId: number, type: string, limit: number = 100): Promise<SensorReading[]> {
+    return await db
+      .select()
+      .from(sensorReadings)
+      .where(and(
+        eq(sensorReadings.deviceId, deviceId),
+        eq(sensorReadings.type, type)
+      ))
+      .orderBy(desc(sensorReadings.timestamp))
+      .limit(limit);
   }
 
   async createSensorReading(reading: InsertSensorReading): Promise<SensorReading> {
-    const id = this.currentSensorReadingIdCounter++;
-    const newReading: SensorReading = {
-      ...reading,
-      id,
-      timestamp: reading.timestamp || new Date()
-    };
-    this.sensorReadings.set(id, newReading);
-    return newReading;
+    const result = await db.insert(sensorReadings).values(reading).returning();
+    return result[0];
   }
-
-  /* Crop operations */
+  
+  // Crop operations
   async getCrop(id: number): Promise<Crop | undefined> {
-    return this.crops.get(id);
+    const result = await db.select().from(crops).where(eq(crops.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getCropsByUserId(userId: number): Promise<Crop[]> {
-    return Array.from(this.crops.values()).filter(
-      (crop) => crop.userId === userId
-    );
+    return await db.select().from(crops).where(eq(crops.userId, userId));
   }
 
   async getCropsByFarmId(farmId: number): Promise<Crop[]> {
-    return Array.from(this.crops.values()).filter(
-      (crop) => crop.farmId === farmId
-    );
+    return await db.select().from(crops).where(eq(crops.farmId, farmId));
   }
 
   async createCrop(crop: InsertCrop): Promise<Crop> {
-    const id = this.currentCropIdCounter++;
-    const newCrop: Crop = { ...crop, id };
-    this.crops.set(id, newCrop);
-    return newCrop;
+    const result = await db.insert(crops).values(crop).returning();
+    return result[0];
   }
 
   async updateCropStatus(id: number, status: string, healthStatus?: string): Promise<Crop> {
-    const crop = await this.getCrop(id);
-    if (!crop) {
-      throw new Error(`Crop with id ${id} not found`);
+    const updateValues: Partial<Crop> = { status };
+    if (healthStatus !== undefined) {
+      updateValues.healthStatus = healthStatus;
     }
     
-    const updatedCrop: Crop = {
-      ...crop,
-      status,
-      healthStatus: healthStatus || crop.healthStatus
-    };
+    const result = await db
+      .update(crops)
+      .set(updateValues)
+      .where(eq(crops.id, id))
+      .returning();
     
-    this.crops.set(id, updatedCrop);
-    return updatedCrop;
+    return result[0];
   }
-
-  /* Task operations */
+  
+  // Task operations
   async getTask(id: number): Promise<Task | undefined> {
-    return this.tasks.get(id);
+    const result = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getTasksByUserId(userId: number): Promise<Task[]> {
-    return Array.from(this.tasks.values()).filter(
-      (task) => task.userId === userId
-    );
+    return await db.select().from(tasks).where(eq(tasks.userId, userId));
   }
 
   async getTasksByFarmId(farmId: number): Promise<Task[]> {
-    return Array.from(this.tasks.values()).filter(
-      (task) => task.farmId === farmId
-    );
+    return await db.select().from(tasks).where(eq(tasks.farmId, farmId));
   }
 
   async getTasksByCropId(cropId: number): Promise<Task[]> {
-    return Array.from(this.tasks.values()).filter(
-      (task) => task.cropId === cropId
-    );
+    return await db.select().from(tasks).where(eq(tasks.cropId, cropId));
   }
 
   async createTask(task: InsertTask): Promise<Task> {
-    const id = this.currentTaskIdCounter++;
-    const newTask: Task = {
-      ...task,
-      id,
-      completed: false,
-      completedDate: null
-    };
-    this.tasks.set(id, newTask);
-    return newTask;
+    const result = await db.insert(tasks).values(task).returning();
+    return result[0];
   }
 
   async updateTaskCompletion(id: number, completed: boolean): Promise<Task> {
-    const task = await this.getTask(id);
-    if (!task) {
-      throw new Error(`Task with id ${id} not found`);
-    }
-    
-    const updatedTask: Task = {
-      ...task,
+    const updateValues: Partial<Task> = { 
       completed,
       completedDate: completed ? new Date() : null
     };
     
-    this.tasks.set(id, updatedTask);
-    return updatedTask;
+    const result = await db
+      .update(tasks)
+      .set(updateValues)
+      .where(eq(tasks.id, id))
+      .returning();
+    
+    return result[0];
   }
-
-  /* Marketplace operations */
+  
+  // Marketplace operations
   async getMarketplaceListing(id: number): Promise<MarketplaceListing | undefined> {
-    return this.marketplaceListings.get(id);
+    const result = await db.select().from(marketplaceListings).where(eq(marketplaceListings.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getMarketplaceListingsByUserId(userId: number): Promise<MarketplaceListing[]> {
-    return Array.from(this.marketplaceListings.values()).filter(
-      (listing) => listing.userId === userId
-    );
+    return await db.select().from(marketplaceListings).where(eq(marketplaceListings.userId, userId));
   }
 
   async getAllMarketplaceListings(): Promise<MarketplaceListing[]> {
-    return Array.from(this.marketplaceListings.values());
+    return await db.select().from(marketplaceListings);
   }
 
   async createMarketplaceListing(listing: InsertMarketplaceListing): Promise<MarketplaceListing> {
-    const id = this.currentMarketplaceListingIdCounter++;
-    const newListing: MarketplaceListing = {
-      ...listing,
-      id,
-      isVerified: false,
-      createdAt: new Date()
-    };
-    this.marketplaceListings.set(id, newListing);
-    return newListing;
+    const result = await db.insert(marketplaceListings).values(listing).returning();
+    return result[0];
   }
-
-  /* Blockchain operations */
+  
+  // Blockchain operations
   async getBlockchainTransaction(id: number): Promise<BlockchainTransaction | undefined> {
-    return this.blockchainTransactions.get(id);
+    const result = await db.select().from(blockchainTransactions).where(eq(blockchainTransactions.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getBlockchainTransactionsByUserId(userId: number): Promise<BlockchainTransaction[]> {
-    return Array.from(this.blockchainTransactions.values()).filter(
-      (transaction) => transaction.userId === userId
-    );
+    return await db.select().from(blockchainTransactions).where(eq(blockchainTransactions.userId, userId));
   }
 
   async getBlockchainTransactionsByListingId(listingId: number): Promise<BlockchainTransaction[]> {
-    return Array.from(this.blockchainTransactions.values()).filter(
-      (transaction) => transaction.listingId === listingId
-    );
+    return await db.select().from(blockchainTransactions).where(eq(blockchainTransactions.listingId, listingId));
   }
 
   async createBlockchainTransaction(transaction: InsertBlockchainTransaction): Promise<BlockchainTransaction> {
-    const id = this.currentBlockchainTransactionIdCounter++;
-    const newTransaction: BlockchainTransaction = {
-      ...transaction,
-      id,
-      timestamp: transaction.timestamp || new Date()
-    };
-    this.blockchainTransactions.set(id, newTransaction);
-    return newTransaction;
+    const result = await db.insert(blockchainTransactions).values(transaction).returning();
+    return result[0];
   }
-
-  /* Learning operations */
+  
+  // Learning operations
   async getLearningModule(id: number): Promise<LearningModule | undefined> {
-    return this.learningModules.get(id);
+    const result = await db.select().from(learningModules).where(eq(learningModules.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getAllLearningModules(): Promise<LearningModule[]> {
-    return Array.from(this.learningModules.values());
+    return await db.select().from(learningModules);
   }
 
   async createLearningModule(module: InsertLearningModule): Promise<LearningModule> {
-    const id = this.currentLearningModuleIdCounter++;
-    const newModule: LearningModule = { ...module, id };
-    this.learningModules.set(id, newModule);
-    return newModule;
+    const result = await db.insert(learningModules).values(module).returning();
+    return result[0];
   }
 
   async getUserLearningProgress(userId: number, moduleId: number): Promise<UserLearningProgress | undefined> {
-    return this.userLearningProgress.get(`${userId}-${moduleId}`);
+    const result = await db
+      .select()
+      .from(userLearningProgress)
+      .where(and(
+        eq(userLearningProgress.userId, userId),
+        eq(userLearningProgress.moduleId, moduleId)
+      ))
+      .limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getAllUserLearningProgress(userId: number): Promise<UserLearningProgress[]> {
-    return Array.from(this.userLearningProgress.values()).filter(
-      (progress) => progress.userId === userId
-    );
+    return await db.select().from(userLearningProgress).where(eq(userLearningProgress.userId, userId));
   }
 
   async createUserLearningProgress(progress: InsertUserLearningProgress): Promise<UserLearningProgress> {
-    const id = this.currentUserLearningProgressIdCounter++;
-    const newProgress: UserLearningProgress = {
-      ...progress,
-      id,
-      lastAccessedAt: new Date()
-    };
-    this.userLearningProgress.set(`${progress.userId}-${progress.moduleId}`, newProgress);
-    return newProgress;
+    const result = await db.insert(userLearningProgress).values(progress).returning();
+    return result[0];
   }
 
   async updateUserLearningProgress(userId: number, moduleId: number, progress: number, completed: boolean): Promise<UserLearningProgress> {
-    const userProgress = await this.getUserLearningProgress(userId, moduleId);
-    
-    if (!userProgress) {
-      return this.createUserLearningProgress({
-        userId,
-        moduleId,
-        progress,
-        completed
-      });
-    }
-    
-    const updatedProgress: UserLearningProgress = {
-      ...userProgress,
+    const updateValues: Partial<UserLearningProgress> = { 
       progress,
       completed,
       lastAccessedAt: new Date()
     };
     
-    this.userLearningProgress.set(`${userId}-${moduleId}`, updatedProgress);
-    return updatedProgress;
+    const result = await db
+      .update(userLearningProgress)
+      .set(updateValues)
+      .where(and(
+        eq(userLearningProgress.userId, userId),
+        eq(userLearningProgress.moduleId, moduleId)
+      ))
+      .returning();
+    
+    return result[0];
   }
-
-  /* Weather operations */
+  
+  // Weather operations
   async getWeatherForecast(location: string, date?: Date): Promise<WeatherForecast | undefined> {
-    const dateString = date ? date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-    return this.weatherForecasts.get(`${location}-${dateString}`);
+    if (date) {
+      const result = await db
+        .select()
+        .from(weatherForecasts)
+        .where(and(
+          eq(weatherForecasts.location, location),
+          eq(weatherForecasts.forecastDate, date)
+        ))
+        .limit(1);
+      return result.length > 0 ? result[0] : undefined;
+    } else {
+      // Get the most recent forecast for the location
+      const result = await db
+        .select()
+        .from(weatherForecasts)
+        .where(eq(weatherForecasts.location, location))
+        .orderBy(desc(weatherForecasts.forecastDate))
+        .limit(1);
+      return result.length > 0 ? result[0] : undefined;
+    }
   }
 
-  async getWeatherForecasts(location: string, days = 7): Promise<WeatherForecast[]> {
-    const forecasts = Array.from(this.weatherForecasts.values()).filter(
-      (forecast) => forecast.location === location
-    );
-    
+  async getWeatherForecasts(location: string, days: number = 7): Promise<WeatherForecast[]> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const endDate = new Date();
+    endDate.setDate(today.getDate() + days);
     
-    // Filter forecasts for today and future dates, up to 'days' ahead
-    const filteredForecasts = forecasts.filter(forecast => {
-      const forecastDate = forecast.forecastDate instanceof Date ? forecast.forecastDate : new Date(forecast.forecastDate);
-      forecastDate.setHours(0, 0, 0, 0);
-      
-      const diffTime = forecastDate.getTime() - today.getTime();
-      const diffDays = diffTime / (1000 * 60 * 60 * 24);
-      
-      return diffDays >= 0 && diffDays < days;
-    });
-    
-    // Sort by date ascending
-    filteredForecasts.sort((a, b) => {
-      const aDate = a.forecastDate instanceof Date ? a.forecastDate : new Date(a.forecastDate);
-      const bDate = b.forecastDate instanceof Date ? b.forecastDate : new Date(b.forecastDate);
-      return aDate.getTime() - bDate.getTime();
-    });
-    
-    return filteredForecasts;
+    return await db
+      .select()
+      .from(weatherForecasts)
+      .where(and(
+        eq(weatherForecasts.location, location),
+        gte(weatherForecasts.forecastDate, today),
+        lte(weatherForecasts.forecastDate, endDate)
+      ))
+      .orderBy(weatherForecasts.forecastDate);
   }
 
   async createWeatherForecast(forecast: InsertWeatherForecast): Promise<WeatherForecast> {
-    const id = this.currentWeatherForecastIdCounter++;
-    const newForecast: WeatherForecast = { ...forecast, id };
-    
-    const dateString = forecast.forecastDate instanceof Date 
-      ? forecast.forecastDate.toISOString().split('T')[0] 
-      : new Date(forecast.forecastDate).toISOString().split('T')[0];
-    
-    this.weatherForecasts.set(`${forecast.location}-${dateString}`, newForecast);
-    return newForecast;
+    const result = await db.insert(weatherForecasts).values(forecast).returning();
+    return result[0];
   }
-
-  /* Crop recommendation operations */
+  
+  // Crop recommendation operations
   async getCropRecommendation(id: number): Promise<CropRecommendation | undefined> {
-    return this.cropRecommendations.get(id);
+    const result = await db.select().from(cropRecommendations).where(eq(cropRecommendations.id, id)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
   }
 
   async getCropRecommendationsByUserId(userId: number): Promise<CropRecommendation[]> {
-    return Array.from(this.cropRecommendations.values()).filter(
-      (recommendation) => recommendation.userId === userId
-    );
+    return await db.select().from(cropRecommendations).where(eq(cropRecommendations.userId, userId));
   }
 
   async getCropRecommendationsByLocation(location: string): Promise<CropRecommendation[]> {
-    return Array.from(this.cropRecommendations.values()).filter(
-      (recommendation) => recommendation.location === location
-    );
+    return await db.select().from(cropRecommendations).where(eq(cropRecommendations.location, location));
   }
 
   async createCropRecommendation(recommendation: InsertCropRecommendation): Promise<CropRecommendation> {
-    const id = this.currentCropRecommendationIdCounter++;
-    const newRecommendation: CropRecommendation = { ...recommendation, id };
-    this.cropRecommendations.set(id, newRecommendation);
-    return newRecommendation;
+    const result = await db.insert(cropRecommendations).values(recommendation).returning();
+    return result[0];
+  }
+
+  // Add methods to seed initial data
+  async seedInitialData() {
+    // Check if we have users
+    const userCount = await db.select({ count: users.id }).from(users);
+    if (Number(userCount[0]?.count) === 0) {
+      // Seed initial data
+      await this.seedUsers();
+      await this.seedFarms();
+      await this.seedDevices();
+      await this.seedSensorReadings();
+      await this.seedCrops();
+      await this.seedTasks();
+      await this.seedLearningModules();
+      await this.seedWeatherForecasts();
+      await this.seedMarketplaceListings();
+    }
+  }
+
+  private async seedUsers() {
+    await db.insert(users).values([
+      {
+        username: "farmer_raj",
+        password: "password123",
+        displayName: "Raj Kumar",
+        location: "Barabanki",
+        preferredLanguage: "hi",
+        role: "farmer"
+      },
+      {
+        username: "agro_expert",
+        password: "expert456",
+        displayName: "Priya Singh",
+        location: "Lucknow",
+        preferredLanguage: "en",
+        role: "expert"
+      }
+    ]);
+  }
+
+  private async seedFarms() {
+    await db.insert(farms).values([
+      {
+        userId: 1,
+        name: "Barabanki Farm",
+        location: "Barabanki, UP",
+        size: 5.5,
+        description: "Small family farm with mixed crops"
+      }
+    ]);
+  }
+
+  private async seedDevices() {
+    await db.insert(devices).values([
+      {
+        userId: 1,
+        farmId: 1,
+        name: "AgroSakhi Band 1",
+        type: "AgroSakhi Band",
+        location: "North Field",
+        status: "online",
+        batteryLevel: 85,
+        lastSeen: new Date()
+      },
+      {
+        userId: 1,
+        farmId: 1,
+        name: "SakhiSense Station 1",
+        type: "SakhiSense Station",
+        location: "Central Field",
+        status: "online",
+        batteryLevel: 92,
+        lastSeen: new Date()
+      }
+    ]);
+  }
+
+  private async seedSensorReadings() {
+    const now = new Date();
+    await db.insert(sensorReadings).values([
+      {
+        deviceId: 1,
+        type: "soil_moisture",
+        value: 42.5,
+        unit: "%",
+        timestamp: now
+      },
+      {
+        deviceId: 1,
+        type: "soil_temperature",
+        value: 28.3,
+        unit: "°C",
+        timestamp: now
+      },
+      {
+        deviceId: 1,
+        type: "light_level",
+        value: 850,
+        unit: "lux",
+        timestamp: now
+      },
+      {
+        deviceId: 2,
+        type: "soil_moisture",
+        value: 38.7,
+        unit: "%",
+        timestamp: now
+      },
+      {
+        deviceId: 2,
+        type: "soil_temperature",
+        value: 27.9,
+        unit: "°C",
+        timestamp: now
+      }
+    ]);
+  }
+
+  private async seedCrops() {
+    const plantingDate = new Date();
+    plantingDate.setMonth(plantingDate.getMonth() - 1);
+    
+    const harvestDate = new Date();
+    harvestDate.setMonth(harvestDate.getMonth() + 2);
+    
+    await db.insert(crops).values([
+      {
+        userId: 1,
+        farmId: 1,
+        name: "Wheat",
+        variety: "HD-2967",
+        plantingDate,
+        harvestDate,
+        status: "active",
+        healthStatus: "good",
+        area: 2.5
+      },
+      {
+        userId: 1,
+        farmId: 1,
+        name: "Rice",
+        variety: "Pusa Basmati",
+        plantingDate,
+        harvestDate,
+        status: "active",
+        healthStatus: "needs_attention",
+        area: 1.5
+      }
+    ]);
+  }
+
+  private async seedTasks() {
+    const scheduledDate = new Date();
+    scheduledDate.setDate(scheduledDate.getDate() + 2);
+    
+    await db.insert(tasks).values([
+      {
+        userId: 1,
+        farmId: 1,
+        cropId: 1,
+        title: "Irrigation",
+        description: "Water the wheat field",
+        scheduledDate,
+        completed: false,
+        priority: "high"
+      },
+      {
+        userId: 1,
+        farmId: 1,
+        cropId: 2,
+        title: "Apply Fertilizer",
+        description: "Apply organic fertilizer to rice crop",
+        scheduledDate,
+        completed: false,
+        priority: "medium"
+      }
+    ]);
+  }
+
+  private async seedLearningModules() {
+    await db.insert(learningModules).values([
+      {
+        title: "Organic Farming Basics",
+        description: "Learn the fundamentals of organic farming practices",
+        durationMinutes: 60,
+        lessonCount: 5,
+        difficulty: "beginner"
+      },
+      {
+        title: "Advanced Water Management",
+        description: "Techniques for efficient water usage in agriculture",
+        durationMinutes: 90,
+        lessonCount: 7,
+        difficulty: "intermediate"
+      }
+    ]);
+  }
+
+  private async seedWeatherForecasts() {
+    const today = new Date();
+    
+    // Create forecasts for the next 5 days
+    for (let i = 0; i < 5; i++) {
+      const forecastDate = new Date(today);
+      forecastDate.setDate(forecastDate.getDate() + i);
+      
+      await db.insert(weatherForecasts).values({
+        location: "Barabanki",
+        forecastDate,
+        temperature: 28 + Math.random() * 5,
+        minTemperature: 22 + Math.random() * 3,
+        maxTemperature: 30 + Math.random() * 5,
+        humidity: 60 + Math.random() * 20,
+        rainfall: i === 2 ? 15 + Math.random() * 10 : 0, // Rain on day 3
+        condition: i === 2 ? "rainy" : "sunny"
+      });
+    }
+  }
+
+  private async seedMarketplaceListings() {
+    await db.insert(marketplaceListings).values([
+      {
+        userId: 1,
+        cropName: "Wheat",
+        variety: "HD-2967",
+        quantity: 100,
+        unit: "kg",
+        price: 25,
+        currency: "INR",
+        description: "Organically grown wheat",
+        location: "Barabanki, UP",
+        isOrganic: true,
+        isVerified: false,
+        createdAt: new Date()
+      }
+    ]);
   }
 }
 
-// Export a singleton instance of the storage
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
